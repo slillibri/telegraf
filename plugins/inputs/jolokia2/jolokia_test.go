@@ -309,6 +309,7 @@ func TestJolokia2_ObjectValues(t *testing.T) {
 	})
 	acc.AssertContainsTaggedFields(t, "object_with_key_with_spaces", map[string]interface{}{
 		"foo": 123.0,
+		"bar": 456.0
 	}, map[string]string{
 		"test":              "foo bar",
 		"jolokia_agent_url": server.URL,
@@ -553,6 +554,11 @@ func TestJolokia2_MetricCompaction(t *testing.T) {
 	[[jolokia2_agent.metric]]
 		name     = "compact_metric"
 		mbean    = "object_value2:flavor=chocolate"
+		tag_keys = ["flavor"]
+
+	[[jolokia2_agent.metric]]
+		name     = "compact_metric"
+		mbean    = "scalar_value_with_spaces:flavor=\"hot mustard\""
 		tag_keys = ["flavor"]
 	[[jolokia2_agent.metric]]
 		name 	 = "compact_metric"
