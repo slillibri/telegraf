@@ -36,7 +36,11 @@ func TestJolokia2_ScalarValues(t *testing.T) {
 	[[jolokia2_agent.metric]]
 		name     = "scalar_with_key_pattern"
 		mbean    = "scalar_with_key_pattern:test=*"
-		tag_keys = ["test"]`
+		tag_keys = ["test"]
+    [[jolokia2_agent.metric]]
+        name     = "scalar_with_key_with_spaces"
+        mbean    = "scalar_with_key_with_spaces:test=*"
+        tag_keys = ["test"]`
 
 	response := `[{
 		"request": {
@@ -72,6 +76,17 @@ func TestJolokia2_ScalarValues(t *testing.T) {
 			"scalar_with_key_pattern:test=bar": 456
 		},
 		"status": 200
+      },
+      {
+        "request": {
+            "mbean": "scalar_with_key_with_spaces:test=*",
+            "type": "read"
+        },
+        "value": {
+            "scalar_with_key_with_spaces:test=\"foo bar\"": 123,
+            "scalar_with_key_with_spaces:test=\"foo\"": 456
+        },
+        "status": 200
 	  }]`
 
 	server := setupServer(http.StatusOK, response)
@@ -111,6 +126,18 @@ func TestJolokia2_ScalarValues(t *testing.T) {
 		"jolokia_agent_url": server.URL,
 		"test":              "bar",
 	})
+    acc.AssertContainsTaggedFields(t, "scalar_with_key_with_spaces", map[string]interface{}{
+        "value": 123.0,
+    }, map[string]string{
+        "jolokia_agent_url": server.URL,
+        "test":              "foo bar",
+    })
+    acc.AssertContainsTaggedFields(t, "scalar_with_key_with_spaces", map[string]interface{}{
+        "value": 456.0,
+    }, map[string]string{
+        "jolokia_agent_url": server.URL,
+        "test":              "foo",
+    })
 }
 
 func TestJolokia2_ObjectValues(t *testing.T) {
