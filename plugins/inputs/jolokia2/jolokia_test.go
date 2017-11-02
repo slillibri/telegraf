@@ -309,7 +309,7 @@ func TestJolokia2_ObjectValues(t *testing.T) {
 	})
 	acc.AssertContainsTaggedFields(t, "object_with_key_with_spaces", map[string]interface{}{
 		"foo": 123.0,
-		"bar": 456.0
+		"bar": 456.0,
 	}, map[string]string{
 		"test":              "foo bar",
 		"jolokia_agent_url": server.URL,
