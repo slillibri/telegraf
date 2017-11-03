@@ -224,6 +224,7 @@ func makePropertyMap(mbean string) map[string]string {
 			}
 
 			if key := pair[0]; key != "" {
+				pair[1] = strings.Replace(pair[1], "\"", "", -1)
 				props[key] = pair[1]
 			}
 		}

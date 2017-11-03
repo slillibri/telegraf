@@ -36,7 +36,11 @@ func TestJolokia2_ScalarValues(t *testing.T) {
 	[[jolokia2_agent.metric]]
 		name     = "scalar_with_key_pattern"
 		mbean    = "scalar_with_key_pattern:test=*"
-		tag_keys = ["test"]`
+		tag_keys = ["test"]
+    [[jolokia2_agent.metric]]
+        name     = "scalar_with_key_with_spaces"
+        mbean    = "scalar_with_key_with_spaces:test=*"
+        tag_keys = ["test"]`
 
 	response := `[{
 		"request": {
@@ -72,6 +76,17 @@ func TestJolokia2_ScalarValues(t *testing.T) {
 			"scalar_with_key_pattern:test=bar": 456
 		},
 		"status": 200
+      },
+      {
+        "request": {
+            "mbean": "scalar_with_key_with_spaces:test=*",
+            "type": "read"
+        },
+        "value": {
+            "scalar_with_key_with_spaces:test=\"foo bar\"": 123,
+            "scalar_with_key_with_spaces:test=\"foo\"": 456
+        },
+        "status": 200
 	  }]`
 
 	server := setupServer(http.StatusOK, response)
@@ -111,6 +126,18 @@ func TestJolokia2_ScalarValues(t *testing.T) {
 		"jolokia_agent_url": server.URL,
 		"test":              "bar",
 	})
+    acc.AssertContainsTaggedFields(t, "scalar_with_key_with_spaces", map[string]interface{}{
+        "value": 123.0,
+    }, map[string]string{
+        "jolokia_agent_url": server.URL,
+        "test":              "foo bar",
+    })
+    acc.AssertContainsTaggedFields(t, "scalar_with_key_with_spaces", map[string]interface{}{
+        "value": 456.0,
+    }, map[string]string{
+        "jolokia_agent_url": server.URL,
+        "test":              "foo",
+    })
 }
 
 func TestJolokia2_ObjectValues(t *testing.T) {
@@ -143,6 +170,10 @@ func TestJolokia2_ObjectValues(t *testing.T) {
 	[[jolokia2_agent.metric]]
 		name     = "object_with_key_pattern"
 		mbean    = "object_with_key_pattern:test=*"
+		tag_keys = ["test"]
+	[[jolokia2_agent.metric]]
+		name 	 = "object_with_key_with_spaces"
+		mbean	 = "object_with_key_with_spaces:test=*"
 		tag_keys = ["test"]`
 
 	response := `[{
@@ -214,6 +245,18 @@ func TestJolokia2_ObjectValues(t *testing.T) {
 			}
 		},
 		"status": 200
+	}, {
+		"request": {
+			"mbean": "object_with_key_with_spaces:test=*",
+			"type": "read"
+		},
+		"value": {
+			"object_with_key_with_spaces:test=\"foo bar\"": {
+				"foo": 123,
+				"bar": 456
+			}
+		},
+		"status": 200
 	}]`
 
 	server := setupServer(http.StatusOK, response)
@@ -262,6 +305,13 @@ func TestJolokia2_ObjectValues(t *testing.T) {
 		"biz": 456.0,
 	}, map[string]string{
 		"test":              "bar",
+		"jolokia_agent_url": server.URL,
+	})
+	acc.AssertContainsTaggedFields(t, "object_with_key_with_spaces", map[string]interface{}{
+		"foo": 123.0,
+		"bar": 456.0,
+	}, map[string]string{
+		"test":              "foo bar",
 		"jolokia_agent_url": server.URL,
 	})
 }
@@ -504,6 +554,15 @@ func TestJolokia2_MetricCompaction(t *testing.T) {
 	[[jolokia2_agent.metric]]
 		name     = "compact_metric"
 		mbean    = "object_value2:flavor=chocolate"
+		tag_keys = ["flavor"]
+
+	[[jolokia2_agent.metric]]
+		name     = "compact_metric"
+		mbean    = "scalar_value_with_spaces:flavor=\"hot mustard\""
+		tag_keys = ["flavor"]
+	[[jolokia2_agent.metric]]
+		name 	 = "compact_metric"
+		mbean    = "object_value_with_spaces:flavor=\"hot mustard\""
 		tag_keys = ["flavor"]`
 
 	response := `[{
@@ -538,6 +597,31 @@ func TestJolokia2_MetricCompaction(t *testing.T) {
 			"bar": 789
 		},
 		"status": 200
+	}, {
+		"request": {
+			"mbean": "scalar_value_with_spaces:flavor=\"hot mustard\"",
+			"type": "read"
+		},
+		"value": 123,
+		"status": 200
+	}, {
+		"request": {
+			"mbean": "object_value_with_spaces:flavor=\"hot mustard\"",
+			"type": "read"
+		},
+		"value": {
+			"foo": 456
+		},
+		"status": 200
+	}, {
+		"request": {
+			"mbean": "object_value_with_spaces:flavor=\"hot mustard\"",
+			"type": "read"
+		},
+		"value": {
+			"bar": 789
+		},
+		"status": 200
 	}]`
 
 	server := setupServer(http.StatusOK, response)
@@ -560,6 +644,15 @@ func TestJolokia2_MetricCompaction(t *testing.T) {
 		"value": 999.0,
 	}, map[string]string{
 		"flavor":            "vanilla",
+		"jolokia_agent_url": server.URL,
+	})
+
+	acc.AssertContainsTaggedFields(t, "compact_metric", map[string]interface{}{
+		"value": 123.0,
+		"foo": 456.0,
+		"bar": 789.0,
+	}, map[string]string{
+		"flavor": 			 "hot mustard",
 		"jolokia_agent_url": server.URL,
 	})
 }
